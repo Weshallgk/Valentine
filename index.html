@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Be My Valentine?</title>
+    <style>
+      :root {
+        --bg1: #ffe5ec;
+        --bg2: #ffd6e0;
+        --card: #fff8fb;
+        --text: #5f0f40;
+        --yes: #2a9d8f;
+        --yes-hover: #21867a;
+        --no: #e76f51;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at top, var(--bg1), var(--bg2));
+        overflow: hidden;
+        transition: filter 260ms ease;
+      }
+
+      body.celebrate {
+        filter: saturate(1.15);
+      }
+
+      .card {
+        width: min(92vw, 540px);
+        background: var(--card);
+        border-radius: 20px;
+        padding: 30px 22px 34px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(95, 15, 64, 0.15);
+        position: relative;
+        transition: transform 320ms ease, box-shadow 320ms ease;
+      }
+
+      .card.celebrate {
+        transform: scale(1.03);
+        box-shadow: 0 28px 58px rgba(95, 15, 64, 0.28);
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(1.8rem, 5vw, 2.8rem);
+      }
+
+      p {
+        margin: 0 0 24px;
+        font-size: clamp(1rem, 3.4vw, 1.15rem);
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+        min-height: 68px;
+      }
+
+      button {
+        border: 0;
+        padding: 12px 24px;
+        min-width: 120px;
+        border-radius: 999px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 120ms ease, background 120ms ease;
+      }
+
+      #yesBtn {
+        background: var(--yes);
+        color: #fff;
+      }
+
+      #yesBtn:hover {
+        background: var(--yes-hover);
+        transform: translateY(-1px);
+      }
+
+      #noBtn {
+        background: var(--no);
+        color: #fff;
+        position: absolute;
+      }
+
+      .result {
+        margin-top: 18px;
+        min-height: 1.5em;
+        font-size: clamp(1.05rem, 3.3vw, 1.28rem);
+        line-height: 1.35;
+        font-weight: 700;
+        color: #7b1e5a;
+      }
+
+      .hearts {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .big-message {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        font-size: clamp(1.4rem, 5vw, 2.5rem);
+        font-weight: 800;
+        color: #7b1e5a;
+        text-shadow: 0 8px 24px rgba(255, 255, 255, 0.9);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 280ms ease, transform 280ms ease;
+        text-align: center;
+        padding: 0 14px;
+        z-index: 8;
+      }
+
+      .big-message.show {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .heart {
+        position: absolute;
+        bottom: -20px;
+        font-size: 18px;
+        animation: floatUp 2.6s linear forwards;
+      }
+
+      .love-note {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: clamp(0.95rem, 2.8vw, 1.2rem);
+        font-weight: 700;
+        color: #7b1e5a;
+        opacity: 0;
+        animation: popAndFloat 1.9s ease forwards;
+        white-space: nowrap;
+      }
+
+      @keyframes floatUp {
+        to {
+          transform: translateY(-110vh) rotate(20deg);
+          opacity: 0;
+        }
+      }
+
+      @keyframes popAndFloat {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.6);
+        }
+        20% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.05);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -180%) scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card" id="card">
+      <h1>Will you be my Valentine?</h1>
+      <p>Pick carefully... one option is clearly better.</p>
+
+      <div class="actions" id="actions">
+        <button id="yesBtn">Yes</button>
+        <button id="noBtn" aria-label="No button that keeps moving away">No</button>
+      </div>
+
+      <div class="result" id="result"></div>
+    </div>
+    <div class="hearts" id="hearts"></div>
+    <div class="big-message" id="bigMessage"></div>
+
+    <script>
+      const yesBtn = document.getElementById("yesBtn");
+      const noBtn = document.getElementById("noBtn");
+      const actions = document.getElementById("actions");
+      const result = document.getElementById("result");
+      const hearts = document.getElementById("hearts");
+      const card = document.getElementById("card");
+      const bigMessage = document.getElementById("bigMessage");
+
+      function randomPos() {
+        const a = actions.getBoundingClientRect();
+        const b = noBtn.getBoundingClientRect();
+        const maxX = Math.max(8, a.width - b.width - 8);
+        const maxY = Math.max(8, a.height + 90 - b.height);
+        const x = Math.random() * maxX;
+        const y = Math.random() * maxY;
+        noBtn.style.left = `${x}px`;
+        noBtn.style.top = `${y}px`;
+      }
+
+      function dodgeNoButton() {
+        randomPos();
+        result.textContent = "Nice try 😄";
+      }
+
+      ["mouseenter", "touchstart", "pointerdown", "click"].forEach((evt) => {
+        noBtn.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dodgeNoButton();
+        });
+      });
+
+      yesBtn.addEventListener("click", () => {
+        result.textContent = "I was knowing it, Munnna! You'd say yes ❤️";
+        document.body.classList.add("celebrate");
+        card.classList.add("celebrate");
+        yesBtn.textContent = "My Valentine 💘";
+        bigMessage.textContent = "Yaaay Munnna! ❤️";
+        bigMessage.classList.add("show");
+
+        setTimeout(() => {
+          document.body.classList.remove("celebrate");
+          card.classList.remove("celebrate");
+        }, 900);
+        setTimeout(() => {
+          bigMessage.classList.remove("show");
+        }, 2200);
+
+        for (let i = 0; i < 40; i++) {
+          setTimeout(() => {
+            const h = document.createElement("div");
+            h.className = "heart";
+            h.textContent = ["💖", "💕", "💘", "❤️"][Math.floor(Math.random() * 4)];
+            h.style.left = `${Math.random() * 100}vw`;
+            h.style.opacity = String(0.6 + Math.random() * 0.4);
+            h.style.fontSize = `${14 + Math.random() * 20}px`;
+            hearts.appendChild(h);
+            setTimeout(() => h.remove(), 2700);
+          }, i * 55);
+        }
+
+        const notes = ["I love you, Munnna", "Best yes ever", "Forever us", "Cutest couple"];
+        for (let i = 0; i < 10; i++) {
+          setTimeout(() => {
+            const note = document.createElement("div");
+            note.className = "love-note";
+            note.textContent = notes[Math.floor(Math.random() * notes.length)];
+            note.style.left = `${8 + Math.random() * 84}%`;
+            note.style.top = `${16 + Math.random() * 70}%`;
+            note.style.transform = `translate(-50%, -50%) rotate(${(-12 + Math.random() * 24).toFixed(1)}deg)`;
+            hearts.appendChild(note);
+            setTimeout(() => note.remove(), 2000);
+          }, i * 120);
+        }
+      });
+
+      // Place the no button initially in a visible spot.
+      noBtn.style.left = "62%";
+      noBtn.style.top = "8px";
+
+      window.addEventListener("resize", () => {
+        randomPos();
+      });
+    </script>
+  </body>
+</html>
