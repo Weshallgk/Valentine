@@ -62,12 +62,10 @@
       }
 
       .actions {
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-        flex-wrap: wrap;
         position: relative;
-        min-height: 68px;
+        height: 56px;
+        width: min(260px, 90vw);
+        margin: 0 auto;
       }
 
       button {
@@ -84,6 +82,9 @@
       #yesBtn {
         background: var(--yes);
         color: #fff;
+        position: absolute;
+        left: 0;
+        top: 0;
       }
 
       #yesBtn:hover {
@@ -94,11 +95,9 @@
       #noBtn {
         background: var(--no);
         color: #fff;
-      }
-
-      #noBtn:hover {
-        background: #d45a3f;
-        transform: translateY(-1px);
+        position: absolute;
+        left: 140px;
+        top: 0;
       }
 
       .result {
@@ -274,8 +273,8 @@
       });
 
       // Place the no button initially in a visible spot.
-      noBtn.style.left = "62%";
-      noBtn.style.top = "8px";
+      noBtn.style.left = "140px";
+      noBtn.style.top = "0";
 
       window.addEventListener("resize", () => {
         randomPos();
